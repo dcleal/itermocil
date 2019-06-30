@@ -20,7 +20,7 @@ class Itermocil(object):
         Applescript based upon that.
     """
 
-    def __init__(self, teamocil_file, here=False, cwd=None):
+    def __init__(self, teamocil_file, here=False, cwd=None, command_args=[]):
         """ Establish iTerm version, and initialise the list which
             will contain all the Applescript commands to execute.
         """
@@ -47,6 +47,7 @@ class Itermocil(object):
         self.file = teamocil_file
         self.here = here
         self.cwd = cwd
+        self.command_args = command_args
 
         # Open up the file and parse it with PyYaml
         with open(self.file, 'r') as f:
@@ -569,8 +570,7 @@ class Itermocil(object):
                     if isinstance(pane, dict):
                         if 'commands' in pane:
                             for command in pane['commands']:
-                                escaped_command = command.replace('"', r'\"')
-                                pane_commands.append(escaped_command)
+                                pane_commands.append(self.format_command(command))
 
                         if 'name' in pane:
                             pane_name = pane.get('name', None)
@@ -579,8 +579,7 @@ class Itermocil(object):
                             focus_pane = pane_num
 
                     else:
-                        escaped_command = pane.replace('"', r'\"')
-                        pane_commands.append(escaped_command)
+                        pane_commands.append(self.format_command(pane))
 
                     # Check if this pane, or containing window has a name.
                     if pane_name:
@@ -595,11 +594,15 @@ class Itermocil(object):
             else:
                 commands = []
                 if 'command' in window:
-                    commands.append(window['command'])
+                    commands.append(self.format_command(window['command']))
                 elif 'commands' in window:
-                    commands = window['commands']
+                    commands = map(self.format_command,window['commands'])
                 self.initiate_window(commands)
 
+    def format_command(self, command):
+        if self.command_args:
+            command = command.format(*self.command_args)
+        return command.replace('"', r'\"')
 
 def main():
 
@@ -633,6 +636,10 @@ def main():
     parser.add_argument("--layout",
                         help="specify a layout file rather looking in the ~/.teamocil",
                         action="store_true",
+                        default=None)
+
+    parser.add_argument("--command_args",
+                        help="specify parameters to substitute into window and pane commands",
                         default=None)
 
     parser.add_argument("--list",
@@ -701,7 +708,10 @@ def main():
             if not os.path.isfile(filepath) and os.path.isfile(filepath_teamocil):
                 filepath = filepath_teamocil
 
-
+    if args.command_args:
+        command_args=args.command_args.split(',')
+    else:
+        command_args=[]
     # If --edit the try to launch editor and exit
     if args.edit:
         editor_var = os.getenv('EDITOR')
@@ -730,7 +740,7 @@ def main():
 
     # Parse the teamocil file and execute it.
     cwd = os.getcwd()
-    instance = Itermocil(filepath, here=args.here, cwd=cwd)
+    instance = Itermocil(filepath, here=args.here, cwd=cwd, command_args=command_args)
 
     # If --debug then output the applescript. Do some rough'n'ready
     # formatting on it.

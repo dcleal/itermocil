@@ -49,12 +49,13 @@ iTermocil is compatible with all of teamocil's flags, and they all work in the s
 
 ### Layout options
 
-| Option      | Description
-|-------------|----------------------------
-| `--layout`  | Takes a custom file path to a YAML layout file instead of `[layout-name]`
-| `--here`    | Uses the current window as the layout’s first window
-| `--edit`    | Edit the layout file in either `$EDITOR` or your preferred GUI editor
-| `--show`    | Shows the layout content instead of executing it
+| Option           | Description
+|------------------|----------------------------
+| `--layout`       | Takes a custom file path to a YAML layout file instead of `[layout-name]`
+| `--here`         | Uses the current window as the layout’s first window
+| `--edit`         | Edit the layout file in either `$EDITOR` or your preferred GUI editor
+| `--show`         | Shows the layout content instead of executing it
+| `--command_args` | Comma-separated list of arguments for pane and window commands
 
 ## Configuration
 
@@ -256,6 +257,28 @@ In the [Layouts](https://github.com/TomAnthony/itermocil/blob/master/LAYOUTS.md)
 - 3_columns - 3 columns with as many rows as needed
 - double-main-vertical - 2 left full height columns, and a third multi-row column
 - double-main-horizontal - 2 rows, where bottom row is 2 full width columns, and top row is multi-column
+
+### Commands
+
+Command strings in windows and panes may contain placeholders that will be replaced with extra command line arguments. For example, given this command definition within a layout file: 
+
+```
+...
+    command: ssh {1}@{0}:/mnt/data
+...
+```
+
+If this layout is invoked from the command line with 
+
+```
+itermocil --command_args 10.99.1.1,root my_layout
+```
+
+then the actual command executed within the window or pane will be 
+
+```
+ssh root@10.99.1.1:/mnt/data
+```
 
 ## teamocil
 
